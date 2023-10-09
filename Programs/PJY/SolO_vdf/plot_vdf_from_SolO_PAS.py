@@ -8,6 +8,7 @@ from matplotlib.colors import LogNorm
 import sys
 import pandas as pd
 
+plot_mag = False
 # a = sys.argv
 
 # load vdf data
@@ -41,37 +42,45 @@ xi = np.array([vx_arr.ravel(),vy_arr.ravel(),vz_arr.ravel()]).T
 x_test = np.array([vx.ravel(),vy.ravel(),vz.ravel()]).T
 
 # load mag data
-# mag_l2_dir = r'data\solar_orbiter_data\mag\science\l2\rtn-normal'
-# mag_name = 'solo_l2_mag-rtn-normal_20230401_v01.cdf'
-# mag_file = os.path.join(mag_l2_dir, mag_name)
-#
-# mag_data = cdflib.CDF(mag_file)
-# #%%
-# mag_epoch = mag_data.varget('Epoch')
-# mag_time = cdflib.cdfepoch.to_datetime(mag_epoch)
-# mag_rtn = mag_data.varget('B_RTN')
-# br_lst = mag_rtn[:, 0]
-# bt_lst = mag_rtn[:, 1]
-# bn_lst = mag_rtn[:, 2]
-#%%
+if plot_mag:
+    mag_l2_dir = r'data\solar_orbiter_data\mag\science\l2\rtn-normal'
+    mag_name = 'solo_l2_mag-rtn-normal_20230401_v01.cdf'
+    mag_file = os.path.join(mag_l2_dir, mag_name)
+
+    mag_data = cdflib.CDF(mag_file)
+    # %%
+    mag_epoch = mag_data.varget('Epoch')
+    mag_time = cdflib.cdfepoch.to_datetime(mag_epoch)
+    mag_rtn = mag_data.varget('B_RTN')
+    br_lst = mag_rtn[:, 0]
+    bt_lst = mag_rtn[:, 1]
+    bn_lst = mag_rtn[:, 2]
+
 
 for itime in range(0,epoch.size,500):
     vdf_temp = vdf[itime, :, :, :]
     grid_vdf = (griddata(x_test, vdf_temp.ravel(), xi, method='linear', fill_value=0.0)).reshape([71, 51, 51])
 
-    # br = np.interp(epoch[itime], mag_epoch, br_lst)
-    # bt = np.interp(epoch[itime], mag_epoch, bt_lst)
-    # bn = np.interp(epoch[itime], mag_epoch, bn_lst)
-    # epara = [br, bt, bn]
-    # epara = epara / np.linalg.norm(epara)
+
     # %%
     fig = plt.figure(figsize=(4, 4))
     fig, axs = plt.subplots(1, 1, sharex=True, sharey=True)
     # cax=axs.pcolor(-vx_lst,vy_lst,np.sum(grid_vdf[:,:,:],axis=1).T,cmap='jet', norm=LogNorm(vmin=1e-12,vmax=1e-8))
     thegrid_vdf = grid_vdf[:, 25, :].T
     vdf_max_idx = thegrid_vdf.argmax()
-    cax = axs.pcolor(-vx_lst, vy_lst, thegrid_vdf, cmap='jet', norm=LogNorm(vmin=1e-12, vmax=5e-9))
-    # axs.quiver(-vx_lst[vdf_max_idx % 71], vy_lst[vdf_max_idx // 71], 3 * epara[0], 3 * epara[2])
+    cax = axs.pcolor(-vx_lst, -vz_lst, thegrid_vdf, cmap='jet', norm=LogNorm(vmin=1e-12, vmax=5e-9))
+
+    if plot_mag:
+        br = np.interp(epoch[itime], mag_epoch, br_lst)
+        bt = np.interp(epoch[itime], mag_epoch, bt_lst)
+        bn = np.interp(epoch[itime], mag_epoch, bn_lst)
+        epara = [br, bt, bn]
+        epara = epara / np.linalg.norm(epara)
+        axs.quiver(-vx_lst[vdf_max_idx % 71], -vz_lst[vdf_max_idx // 71], epara[0], epara[2],
+                   color='white', pivot='mid',
+                   scale=13)
+
+    #
     datetime_str = str(vdf_time[itime])
     figtitle = 'VDF  ' + datetime_str
     axs.set_title(figtitle)
