@@ -74,7 +74,7 @@ def get_url(start, end, resolution, wavelength):
 # 下载所有数据
 def download_eui_data(start, end, resolution, wavelength, filepath, overwrite=False, links_only=False):
     download_links = get_url(start, end, resolution, wavelength)
-    if not links_only:
+    if links_only:
         return download_links
 
     number = len(download_links)
