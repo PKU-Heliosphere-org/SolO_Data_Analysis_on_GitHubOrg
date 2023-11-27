@@ -88,6 +88,8 @@ def download_eui_data(start, end, resolution, wavelength, filepath, overwrite=Fa
     if not os.path.exists(filepath):
         os.makedirs(filepath)
 
+    files = []
+
     for i in range(0, len(download_links)):
         url = download_links[i]
         response = requests.get(url, stream=True)
@@ -111,11 +113,12 @@ def download_eui_data(start, end, resolution, wavelength, filepath, overwrite=Fa
             progress_bar.close()
             print(f"file{i+1}/{len(download_links)}, filename:{filename}")
             print("download successful!")
+            files.append(filename)
 
         else:
             print(f"connection failed, response code: {response.status_code}")
 
-    return download_links
+    return len(files), download_links, files
 
 # 函数调用
 # download_eui_data(start, end, resolution, wavelength, filepath, overwrite=False)
@@ -125,4 +128,4 @@ def download_eui_data(start, end, resolution, wavelength, filepath, overwrite=Fa
 # filepath: string. path to save the files.
 # overwrite: bool. default as False. decide overwrite or not when the file already exist.
 # links_only: bool. default as False. if True, the program will not download the files.
-# 返回值: 返回所有数据的下载链接
+# 返回值: 若links_only = True, 只返回下载链接; 否则, 按顺序返回下载文件数目、下载链接、文件名
